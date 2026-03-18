@@ -132,6 +132,7 @@
   .gap-high { background: #FEE2E2; color: #991B1B; }
   .gap-med  { background: #FEF3C7; color: #92400E; }
   .gap-low  { background: #D1FAE5; color: #065F46; }
+  .gap-neg  { background: #DBEAFE; color: #1E40AF; }
   .bar-track { height: 5px; background: var(--gris-100); border-radius: 3px; margin-bottom: 2px; overflow: hidden; }
   .bar-fill { height: 100%; border-radius: 3px; }
   .bar-imp  { background: var(--azul-medio); }
@@ -419,7 +420,7 @@
 
     <div class="mini-chart">
       <div class="mini-chart-title">Tus brechas por intangible</div>
-      <div style="font-size:13px;color:var(--gris-600);line-height:1.55;margin-bottom:12px">Los intangibles aparecen ordenados de mayor a menor brecha (diferencia entre importancia y gestión). Cuanto mayor es la brecha, mayor es la oportunidad de mejora. En caso de empate, el orden lo determina la importancia estratégica asignada.</div>
+      <div style="font-size:13px;color:var(--gris-600);line-height:1.55;margin-bottom:12px">Los intangibles aparecen ordenados de mayor a menor brecha (importancia menos gestión). Cuanto mayor es la brecha, mayor es la oportunidad de mejora. En caso de empate, el orden lo determina la importancia estratégica asignada. <strong>Nota:</strong> un intangible <em>Alineado</em> puede tener niveles altos (4/4) o bajos (2/2); lo que importa es tanto la brecha como el nivel absoluto de gestión, que puedes ver en la longitud de las barras. Un intangible <em>Gestionado</em> indica que la inversión en gestión supera la importancia estratégica percibida: puede ser una fortaleza o una señal de sobreinversión.</div>
       <div class="mini-legend">
         <div class="mini-legend-item"><div class="ldot ldot-imp"></div>Importancia</div>
         <div class="mini-legend-item"><div class="ldot ldot-gest"></div>Gestión actual</div>
@@ -581,7 +582,7 @@
       <div id="out-gap-chart"></div>
     </div>
     <div class="bloqueo-card">
-      <div class="bloqueo-label">Perfil de bloqueo detectado</div>
+      <div class="bloqueo-label">Perfil de gestión detectado</div>
       <div class="bloqueo-tipo" id="out-bloqueo-tipo"></div>
       <div class="bloqueo-desc" id="out-bloqueo-desc"></div>
     </div>
@@ -607,7 +608,7 @@ const B3_DIMS = [
   { tag:'Estrategia — ¿hay plan?',               tmpl:'Existe un plan o hoja de ruta definida para mejorar nuestra gestión de [I].' },
   { tag:'Presupuesto — ¿tenemos recursos?',      tmpl:'La gestión de [I] tiene presupuesto o cuenta con recursos económicos asignados.' },
   { tag:'Medición — ¿hay indicadores?',          tmpl:'Medimos de alguna forma el impacto de [I] en nuestros resultados.' },
-  { tag:'Cultura — ¿forma parte de la agenda?',  tmpl:'El equipo directivo habla de [I] con regularidad como palanca estratégica.' },
+  { tag:'Cultura — ¿forma parte de la agenda?',  tmpl:'[I] aparece con regularidad en la agenda del equipo directivo con objetivos o datos concretos que orientan decisiones.' },
   { tag:'Ejecución — ¿el freno es el cómo?',    tmpl:'Nos cuesta ejecutar las mejoras, aun sabiendo qué deberíamos hacer.' }
 ];
 
@@ -830,8 +831,8 @@ function buildMiniChart() {
   const w = document.getElementById('mini-chart-rows');
   w.innerHTML = '';
   gaps.forEach(g => {
-    const cls = g.gap >= 3 ? 'gap-high' : g.gap >= 1 ? 'gap-med' : 'gap-low';
-    const lbl = g.gap > 0 ? `Brecha ${g.gap}` : 'Sin brecha';
+    const cls = g.gap >= 3 ? 'gap-high' : g.gap >= 1 ? 'gap-med' : g.gap === 0 ? 'gap-low' : 'gap-neg';
+    const lbl = g.gap > 0 ? `Brecha +${g.gap}` : g.gap === 0 ? 'Alineado' : 'Gestionado';
     w.innerHTML += `<div class="mini-row"><div class="mini-row-top"><span class="mini-row-name">${g.name}</span><span class="gap-badge ${cls}">${lbl}</span></div><div class="bar-track"><div class="bar-fill bar-imp" style="width:${g.imp*20}%"></div></div><div class="bar-track"><div class="bar-fill bar-gest" style="width:${g.gest*20}%"></div></div></div>`;
   });
 }
@@ -948,13 +949,13 @@ function buildEmailHTML() {
   const intMay   = intCon.charAt(0).toUpperCase() + intCon.slice(1);
   let tipoBloqueo, descBloqueo;
   if (avg01 < 3) {
-    tipoBloqueo  = 'Bloqueo estratégico';
+    tipoBloqueo  = 'Foco estratégico';
     descBloqueo  = `No hay un dueño claro ni un plan definido para ${intCon}. El primer paso en M&I AVANZA es establecer responsabilidad y construir una hoja de ruta realista.`;
   } else if (avg34 < 3) {
-    tipoBloqueo  = 'Bloqueo de medición y cultura';
+    tipoBloqueo  = 'Foco en medición y cultura';
     descBloqueo  = `${intMay} no se mide ni se debate de forma regular en el equipo directivo. El plan M&I AVANZA se centrará en crear hábitos de seguimiento e indicadores prácticos.`;
   } else if (top4Hi && b3s[5]>=4) {
-    tipoBloqueo  = 'Bloqueo de ejecución';
+    tipoBloqueo  = 'Foco en ejecución';
     descBloqueo  = `Sabes qué hay que hacer con ${intCon}, pero la ejecución se resiste. M&I AVANZA se centra en transformar esa claridad estratégica en avances concretos y medibles.`;
   } else {
     tipoBloqueo  = 'Perfil avanzado';
@@ -978,7 +979,7 @@ function buildEmailHTML() {
   // Filas del mapa de brechas
   let brechaRows = '';
   gaps.forEach(g => {
-    const col = g.gap >= 3 ? '#c0392b' : g.gap >= 1 ? '#C55A11' : '#27ae60';
+    const col = g.gap >= 3 ? '#c0392b' : g.gap >= 1 ? '#C55A11' : g.gap === 0 ? '#27ae60' : '#1565C0';
     brechaRows += `<tr><td style="padding:7px 12px;border-bottom:1px solid #eee;font-size:13px;color:#333">${g.name}</td><td style="padding:7px 12px;text-align:center;font-size:13px">${g.imp}/5</td><td style="padding:7px 12px;text-align:center;font-size:13px">${g.gest}/5</td><td style="padding:7px 12px;text-align:center;font-size:13px;font-weight:700;color:${col}">${g.gap > 0 ? '+'+g.gap : g.gap}</td></tr>`;
   });
 
@@ -1037,7 +1038,7 @@ function buildEmailHTML() {
 
   <!-- Perfil de bloqueo -->
   <div style="margin:20px 36px;background:#FAE8DC;border-left:4px solid #C55A11;border-radius:4px;padding:14px 18px">
-    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#C55A11;margin-bottom:4px">Perfil de bloqueo detectado</div>
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#C55A11;margin-bottom:4px">Perfil de gestión detectado</div>
     <div style="font-size:15px;font-weight:700;color:#1C2333">${tipoBloqueo}</div>
     <div style="font-size:13px;color:#4B5563;margin-top:8px;line-height:1.55">${descBloqueo}</div>
   </div>
@@ -1126,10 +1127,10 @@ function collectAllData() {
   const avg01  = (b3s[0]+b3s[1]) / 2;
   const avg34  = (b3s[3]+b3s[4]) / 2;
   const top4Hi = b3s.slice(0,5).every(s => s >= 4);
-  if      (avg01 < 3)              data.perfil_bloqueo = 'Estratégico';
-  else if (avg34 < 3)              data.perfil_bloqueo = 'Medición y cultura';
-  else if (top4Hi && b3s[5] >= 4) data.perfil_bloqueo = 'Ejecución';
-  else                             data.perfil_bloqueo = 'Avanzado';
+  if      (avg01 < 3)              data.perfil_bloqueo = 'Foco estratégico';
+  else if (avg34 < 3)              data.perfil_bloqueo = 'Foco medición y cultura';
+  else if (top4Hi && b3s[5] >= 4) data.perfil_bloqueo = 'Foco ejecución';
+  else                             data.perfil_bloqueo = 'Perfil avanzado';
 
   // B3.5 — Profundización (variable según intangible)
   const items35 = B35_ITEMS[selectedIntangible] || [];
@@ -1201,13 +1202,13 @@ function buildOutput() {
   const intMay   = intCon.charAt(0).toUpperCase() + intCon.slice(1); // "La Marca"
 
   if (avg01 < 3) {
-    tipo = 'Bloqueo estratégico';
+    tipo = 'Foco estratégico';
     desc = `No hay un dueño claro ni un plan definido para ${intCon}. El primer paso en M&I AVANZA es establecer responsabilidad y construir una hoja de ruta realista.`;
   } else if (avg34 < 3) {
-    tipo = 'Bloqueo de medición y cultura';
+    tipo = 'Foco en medición y cultura';
     desc = `${intMay} no se mide ni se debate de forma regular en el equipo directivo. El plan M&I AVANZA se centrará en crear hábitos de seguimiento e indicadores prácticos.`;
   } else if (top4High && scoreEjec >= 4) {
-    tipo = 'Bloqueo de ejecución';
+    tipo = 'Foco en ejecución';
     desc = `Sabes qué hay que hacer con ${intCon}, pero la ejecución se resiste. M&I AVANZA se centra en transformar esa claridad estratégica en avances concretos y medibles.`;
   } else {
     tipo = 'Perfil avanzado';
@@ -1226,8 +1227,8 @@ function buildOutput() {
   const chartEl = document.getElementById('out-gap-chart');
   chartEl.innerHTML = '';
   gaps.forEach(g => {
-    const cls = g.gap >= 3 ? 'gap-high' : g.gap >= 1 ? 'gap-med' : 'gap-low';
-    const lbl = g.gap > 0 ? `Brecha ${g.gap}` : 'Sin brecha';
+    const cls = g.gap >= 3 ? 'gap-high' : g.gap >= 1 ? 'gap-med' : g.gap === 0 ? 'gap-low' : 'gap-neg';
+    const lbl = g.gap > 0 ? `Brecha +${g.gap}` : g.gap === 0 ? 'Alineado' : 'Gestionado';
     chartEl.innerHTML += `<div class="chart-row"><div class="chart-row-top"><span class="chart-row-name">${g.name}</span><span class="chart-gap-badge ${cls}">${lbl}</span></div><div class="bar-track"><div class="bar-fill bar-imp" style="width:${g.imp*20}%"></div></div><div class="bar-track"><div class="bar-fill bar-gest" style="width:${g.gest*20}%"></div></div></div>`;
   });
 
