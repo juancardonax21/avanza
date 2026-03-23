@@ -590,6 +590,9 @@
       <div class="profund-label">Síntesis de profundización · <span id="out-profund-intangible"></span></div>
       <div id="out-profund-items"></div>
     </div>
+    <div style="margin-top:24px;padding:16px 20px;background:#F8F8F8;border-radius:8px;border:1px solid #e5e7eb;font-size:12px;color:#6B7280;line-height:1.6">
+      Conforme a la información facilitada y el consentimiento otorgado en el momento de su matrícula, le recordamos que Fundación EOI, F.S.P. tratará sus datos con la finalidad de realizar un autodiagnóstico de intangibles para adaptar el contenido y la tutorización del curso a las necesidades de su proyecto o negocio. Puede ejercer sus derechos de acceso, rectificación, supresión y demás derechos previstos en la normativa vigente, así como obtener más información relativa a protección de datos, consultando nuestra <a href="https://www.eoi.es/es/politica-de-privacidad" style="color:#8B1A1A;text-decoration:underline;">Política de Privacidad de la Fundación EOI</a>.
+    </div>
     <div class="cta-box">
       <h3>El siguiente paso: tu reunión de diagnóstico</h3>
       <p>Muchas gracias por tu tiempo. El Director del Programa se pondrá en contacto contigo en un plazo máximo de 5 días hábiles para concertar la primera reunión. Revisa tu carpeta de spam si no recibes noticias. Con este perfil, juntos vais a diseñar tu programa M&amp;I AVANZA.</p>
@@ -1073,6 +1076,11 @@ function buildEmailHTML() {
     <p style="font-size:14px;color:#333;margin:0;line-height:1.55">${resultado}</p>
   </div>
 
+  <!-- Privacidad -->
+  <div style="margin:0 36px 20px;padding:14px 18px;background:#F8F9FA;border-radius:4px;font-size:11px;color:#9CA3AF;line-height:1.6">
+    Conforme a la información facilitada y el consentimiento otorgado en el momento de su matrícula, le recordamos que Fundación EOI, F.S.P. tratará sus datos con la finalidad de realizar un autodiagnóstico de intangibles para adaptar el contenido y la tutorización del curso a las necesidades de su proyecto o negocio. Puede ejercer sus derechos de acceso, rectificación, supresión y demás derechos previstos en la normativa vigente, así como obtener más información relativa a protección de datos, consultando nuestra <a href="https://www.eoi.es/es/politica-de-privacidad" style="color:#6B7280;">Política de Privacidad de la Fundación EOI</a>.
+  </div>
+
   <!-- Footer -->
   <div style="background:#ffffff;padding:0;text-align:center">
     <img src="https://drive.google.com/uc?export=view&id=1qwXmqBCw15Kb3h2Ew-rN6IXDTObEZIpR" alt="Impulsado por FMRE, ICEX, OEPM · Coordinación académica EOI" style="width:100%;display:block;border:0">
@@ -1082,7 +1090,7 @@ function buildEmailHTML() {
 }
 
 // Pega aquí la URL de tu Web App de Google Apps Script tras desplegarlo
-const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbzYqOF4olTk6_walUoOQaPHFV6B3oXXZjAMAH9Ee47Y3TGz_ddB2mFQtJWsv3SDGKNT/exec';
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbxhqyY2XMJZg01NcOYgQtMQGcU1dTOBli1PcyYJ_BfdnOgTkF0z_0mR2x5L6_mH2Ush/exec';
 const LOGO_URL = 'https://drive.google.com/uc?export=view&id=1YHJmWmGjLBfhl36CiVlT2Ius6Xa7qXy3'; // Sustituir por URL pública cuando esté disponible
 
 function collectAllData() {
@@ -1157,7 +1165,7 @@ async function submitForm() {
   // Mostrar estado de carga en el botón
   const btn = document.querySelector('#screen-4 .btn-primary');
   const originalText = btn.textContent;
-  btn.textContent = 'Generando informe…';
+  btn.textContent = 'Enviando…';
   btn.disabled = true;
 
   // Construir output antes de enviar (necesita los datos en DOM)
