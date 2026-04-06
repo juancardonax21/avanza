@@ -132,7 +132,6 @@
   .gap-high { background: #FEE2E2; color: #991B1B; }
   .gap-med  { background: #FEF3C7; color: #92400E; }
   .gap-low  { background: #D1FAE5; color: #065F46; }
-  .gap-neg  { background: #DBEAFE; color: #1E40AF; }
   .bar-track { height: 5px; background: var(--gris-100); border-radius: 3px; margin-bottom: 2px; overflow: hidden; }
   .bar-fill { height: 100%; border-radius: 3px; }
   .bar-imp  { background: var(--azul-medio); }
@@ -420,7 +419,7 @@
 
     <div class="mini-chart">
       <div class="mini-chart-title">Tus brechas por intangible</div>
-      <div style="font-size:13px;color:var(--gris-600);line-height:1.55;margin-bottom:12px">Los intangibles aparecen ordenados de mayor a menor brecha (importancia menos gestión). Cuanto mayor es la brecha, mayor es la oportunidad de mejora. En caso de empate, el orden lo determina la importancia estratégica asignada. <strong>Nota:</strong> un intangible <em>Alineado</em> puede tener niveles altos (4/4) o bajos (2/2); lo que importa es tanto la brecha como el nivel absoluto de gestión, que puedes ver en la longitud de las barras. Un intangible <em>Gestionado</em> indica que la inversión en gestión supera la importancia estratégica percibida: puede ser una fortaleza o una señal de sobreinversión.</div>
+      <div style="font-size:13px;color:var(--gris-600);line-height:1.55;margin-bottom:12px">Los intangibles aparecen ordenados de mayor a menor brecha (diferencia entre importancia y gestión). Cuanto mayor es la brecha, mayor es la oportunidad de mejora. En caso de empate, el orden lo determina la importancia estratégica asignada.</div>
       <div class="mini-legend">
         <div class="mini-legend-item"><div class="ldot ldot-imp"></div>Importancia</div>
         <div class="mini-legend-item"><div class="ldot ldot-gest"></div>Gestión actual</div>
@@ -582,16 +581,13 @@
       <div id="out-gap-chart"></div>
     </div>
     <div class="bloqueo-card">
-      <div class="bloqueo-label">Perfil de gestión detectado</div>
+      <div class="bloqueo-label">Perfil de bloqueo detectado</div>
       <div class="bloqueo-tipo" id="out-bloqueo-tipo"></div>
       <div class="bloqueo-desc" id="out-bloqueo-desc"></div>
     </div>
     <div class="profund-card">
       <div class="profund-label">Síntesis de profundización · <span id="out-profund-intangible"></span></div>
       <div id="out-profund-items"></div>
-    </div>
-    <div style="margin-top:24px;padding:16px 20px;background:#F8F8F8;border-radius:8px;border:1px solid #e5e7eb;font-size:12px;color:#6B7280;line-height:1.6">
-      Conforme a la información facilitada y el consentimiento otorgado en el momento de su matrícula, le recordamos que Fundación EOI, F.S.P. tratará sus datos con la finalidad de realizar un autodiagnóstico de intangibles para adaptar el contenido y la tutorización del curso a las necesidades de su proyecto o negocio. Puede ejercer sus derechos de acceso, rectificación, supresión y demás derechos previstos en la normativa vigente, así como obtener más información relativa a protección de datos, consultando nuestra <a href="https://www.eoi.es/es/politica-de-privacidad" style="color:#8B1A1A;text-decoration:underline;">Política de Privacidad de la Fundación EOI</a>.
     </div>
     <div class="cta-box">
       <h3>El siguiente paso: tu reunión de diagnóstico</h3>
@@ -611,7 +607,7 @@ const B3_DIMS = [
   { tag:'Estrategia — ¿hay plan?',               tmpl:'Existe un plan o hoja de ruta definida para mejorar nuestra gestión de [I].' },
   { tag:'Presupuesto — ¿tenemos recursos?',      tmpl:'La gestión de [I] tiene presupuesto o cuenta con recursos económicos asignados.' },
   { tag:'Medición — ¿hay indicadores?',          tmpl:'Medimos de alguna forma el impacto de [I] en nuestros resultados.' },
-  { tag:'Cultura — ¿forma parte de la agenda?',  tmpl:'[I] aparece con regularidad en la agenda del equipo directivo con objetivos o datos concretos que orientan decisiones.' },
+  { tag:'Cultura — ¿forma parte de la agenda?',  tmpl:'El equipo directivo habla de [I] con regularidad como palanca estratégica.' },
   { tag:'Ejecución — ¿el freno es el cómo?',    tmpl:'Nos cuesta ejecutar las mejoras, aun sabiendo qué deberíamos hacer.' }
 ];
 
@@ -834,8 +830,8 @@ function buildMiniChart() {
   const w = document.getElementById('mini-chart-rows');
   w.innerHTML = '';
   gaps.forEach(g => {
-    const cls = g.gap >= 3 ? 'gap-high' : g.gap >= 1 ? 'gap-med' : g.gap === 0 ? 'gap-low' : 'gap-neg';
-    const lbl = g.gap > 0 ? `Brecha +${g.gap}` : g.gap === 0 ? 'Alineado' : 'Gestionado';
+    const cls = g.gap >= 3 ? 'gap-high' : g.gap >= 1 ? 'gap-med' : 'gap-low';
+    const lbl = g.gap > 0 ? `Brecha ${g.gap}` : 'Sin brecha';
     w.innerHTML += `<div class="mini-row"><div class="mini-row-top"><span class="mini-row-name">${g.name}</span><span class="gap-badge ${cls}">${lbl}</span></div><div class="bar-track"><div class="bar-fill bar-imp" style="width:${g.imp*20}%"></div></div><div class="bar-track"><div class="bar-fill bar-gest" style="width:${g.gest*20}%"></div></div></div>`;
   });
 }
@@ -952,13 +948,13 @@ function buildEmailHTML() {
   const intMay   = intCon.charAt(0).toUpperCase() + intCon.slice(1);
   let tipoBloqueo, descBloqueo;
   if (avg01 < 3) {
-    tipoBloqueo  = 'Foco estratégico';
+    tipoBloqueo  = 'Bloqueo estratégico';
     descBloqueo  = `No hay un dueño claro ni un plan definido para ${intCon}. El primer paso en M&I AVANZA es establecer responsabilidad y construir una hoja de ruta realista.`;
   } else if (avg34 < 3) {
-    tipoBloqueo  = 'Foco en medición y cultura';
+    tipoBloqueo  = 'Bloqueo de medición y cultura';
     descBloqueo  = `${intMay} no se mide ni se debate de forma regular en el equipo directivo. El plan M&I AVANZA se centrará en crear hábitos de seguimiento e indicadores prácticos.`;
   } else if (top4Hi && b3s[5]>=4) {
-    tipoBloqueo  = 'Foco en ejecución';
+    tipoBloqueo  = 'Bloqueo de ejecución';
     descBloqueo  = `Sabes qué hay que hacer con ${intCon}, pero la ejecución se resiste. M&I AVANZA se centra en transformar esa claridad estratégica en avances concretos y medibles.`;
   } else {
     tipoBloqueo  = 'Perfil avanzado';
@@ -982,7 +978,7 @@ function buildEmailHTML() {
   // Filas del mapa de brechas
   let brechaRows = '';
   gaps.forEach(g => {
-    const col = g.gap >= 3 ? '#c0392b' : g.gap >= 1 ? '#C55A11' : g.gap === 0 ? '#27ae60' : '#1565C0';
+    const col = g.gap >= 3 ? '#c0392b' : g.gap >= 1 ? '#C55A11' : '#27ae60';
     brechaRows += `<tr><td style="padding:7px 12px;border-bottom:1px solid #eee;font-size:13px;color:#333">${g.name}</td><td style="padding:7px 12px;text-align:center;font-size:13px">${g.imp}/5</td><td style="padding:7px 12px;text-align:center;font-size:13px">${g.gest}/5</td><td style="padding:7px 12px;text-align:center;font-size:13px;font-weight:700;color:${col}">${g.gap > 0 ? '+'+g.gap : g.gap}</td></tr>`;
   });
 
@@ -1041,7 +1037,7 @@ function buildEmailHTML() {
 
   <!-- Perfil de bloqueo -->
   <div style="margin:20px 36px;background:#FAE8DC;border-left:4px solid #C55A11;border-radius:4px;padding:14px 18px">
-    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#C55A11;margin-bottom:4px">Perfil de gestión detectado</div>
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#C55A11;margin-bottom:4px">Perfil de bloqueo detectado</div>
     <div style="font-size:15px;font-weight:700;color:#1C2333">${tipoBloqueo}</div>
     <div style="font-size:13px;color:#4B5563;margin-top:8px;line-height:1.55">${descBloqueo}</div>
   </div>
@@ -1076,11 +1072,6 @@ function buildEmailHTML() {
     <p style="font-size:14px;color:#333;margin:0;line-height:1.55">${resultado}</p>
   </div>
 
-  <!-- Privacidad -->
-  <div style="margin:0 36px 20px;padding:14px 18px;background:#F8F9FA;border-radius:4px;font-size:11px;color:#9CA3AF;line-height:1.6">
-    Conforme a la información facilitada y el consentimiento otorgado en el momento de su matrícula, le recordamos que Fundación EOI, F.S.P. tratará sus datos con la finalidad de realizar un autodiagnóstico de intangibles para adaptar el contenido y la tutorización del curso a las necesidades de su proyecto o negocio. Puede ejercer sus derechos de acceso, rectificación, supresión y demás derechos previstos en la normativa vigente, así como obtener más información relativa a protección de datos, consultando nuestra <a href="https://www.eoi.es/es/politica-de-privacidad" style="color:#6B7280;">Política de Privacidad de la Fundación EOI</a>.
-  </div>
-
   <!-- Footer -->
   <div style="background:#ffffff;padding:0;text-align:center">
     <img src="https://drive.google.com/uc?export=view&id=1qwXmqBCw15Kb3h2Ew-rN6IXDTObEZIpR" alt="Impulsado por FMRE, ICEX, OEPM · Coordinación académica EOI" style="width:100%;display:block;border:0">
@@ -1090,7 +1081,7 @@ function buildEmailHTML() {
 }
 
 // Pega aquí la URL de tu Web App de Google Apps Script tras desplegarlo
-const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbyliT0XauoQZBWvq6c_bimQN8v6xCIgXyAqxS1_S-uioKHmu89462DHUKavqyexY0c-/exec';
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbx-nnWpViTiHqaFRKsrkamV0ySZ5FdPUKkFJhsbIRShkZLogGoysXbWYras3IPc5nA2Ug/exec';
 const LOGO_URL = 'https://drive.google.com/uc?export=view&id=1YHJmWmGjLBfhl36CiVlT2Ius6Xa7qXy3'; // Sustituir por URL pública cuando esté disponible
 
 function collectAllData() {
@@ -1135,10 +1126,10 @@ function collectAllData() {
   const avg01  = (b3s[0]+b3s[1]) / 2;
   const avg34  = (b3s[3]+b3s[4]) / 2;
   const top4Hi = b3s.slice(0,5).every(s => s >= 4);
-  if      (avg01 < 3)              data.perfil_bloqueo = 'Foco estratégico';
-  else if (avg34 < 3)              data.perfil_bloqueo = 'Foco medición y cultura';
-  else if (top4Hi && b3s[5] >= 4) data.perfil_bloqueo = 'Foco ejecución';
-  else                             data.perfil_bloqueo = 'Perfil avanzado';
+  if      (avg01 < 3)              data.perfil_bloqueo = 'Estratégico';
+  else if (avg34 < 3)              data.perfil_bloqueo = 'Medición y cultura';
+  else if (top4Hi && b3s[5] >= 4) data.perfil_bloqueo = 'Ejecución';
+  else                             data.perfil_bloqueo = 'Avanzado';
 
   // B3.5 — Profundización (variable según intangible)
   const items35 = B35_ITEMS[selectedIntangible] || [];
@@ -1210,13 +1201,13 @@ function buildOutput() {
   const intMay   = intCon.charAt(0).toUpperCase() + intCon.slice(1); // "La Marca"
 
   if (avg01 < 3) {
-    tipo = 'Foco estratégico';
+    tipo = 'Bloqueo estratégico';
     desc = `No hay un dueño claro ni un plan definido para ${intCon}. El primer paso en M&I AVANZA es establecer responsabilidad y construir una hoja de ruta realista.`;
   } else if (avg34 < 3) {
-    tipo = 'Foco en medición y cultura';
+    tipo = 'Bloqueo de medición y cultura';
     desc = `${intMay} no se mide ni se debate de forma regular en el equipo directivo. El plan M&I AVANZA se centrará en crear hábitos de seguimiento e indicadores prácticos.`;
   } else if (top4High && scoreEjec >= 4) {
-    tipo = 'Foco en ejecución';
+    tipo = 'Bloqueo de ejecución';
     desc = `Sabes qué hay que hacer con ${intCon}, pero la ejecución se resiste. M&I AVANZA se centra en transformar esa claridad estratégica en avances concretos y medibles.`;
   } else {
     tipo = 'Perfil avanzado';
@@ -1235,8 +1226,8 @@ function buildOutput() {
   const chartEl = document.getElementById('out-gap-chart');
   chartEl.innerHTML = '';
   gaps.forEach(g => {
-    const cls = g.gap >= 3 ? 'gap-high' : g.gap >= 1 ? 'gap-med' : g.gap === 0 ? 'gap-low' : 'gap-neg';
-    const lbl = g.gap > 0 ? `Brecha +${g.gap}` : g.gap === 0 ? 'Alineado' : 'Gestionado';
+    const cls = g.gap >= 3 ? 'gap-high' : g.gap >= 1 ? 'gap-med' : 'gap-low';
+    const lbl = g.gap > 0 ? `Brecha ${g.gap}` : 'Sin brecha';
     chartEl.innerHTML += `<div class="chart-row"><div class="chart-row-top"><span class="chart-row-name">${g.name}</span><span class="chart-gap-badge ${cls}">${lbl}</span></div><div class="bar-track"><div class="bar-fill bar-imp" style="width:${g.imp*20}%"></div></div><div class="bar-track"><div class="bar-fill bar-gest" style="width:${g.gest*20}%"></div></div></div>`;
   });
 
