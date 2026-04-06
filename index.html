@@ -898,9 +898,9 @@ async function enviarDiagnosticoPorEmail() {
   const htmlEmail = buildEmailHTML();
 
   try {
-    const resp = await fetch(SHEETS_URL, {
+    await fetch(SHEETS_URL, {
       method: 'POST',
-      redirect: 'follow',
+      mode: 'no-cors',
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({
         accion: 'enviar_email',
@@ -910,9 +910,6 @@ async function enviarDiagnosticoPorEmail() {
         htmlEmail: htmlEmail
       })
     });
-    let resultado = null;
-    try { resultado = JSON.parse(await resp.text()); } catch(_) {}
-    if (resultado && resultado.status === 'error') throw new Error(resultado.message || 'Error en el servidor');
     btn.textContent = '✓ Enviado';
     mostrarEstadoEmail(`Diagnóstico enviado a ${email}. Revisa también tu carpeta de spam si no lo ves en unos minutos.`);
   } catch (e) {
@@ -1090,7 +1087,7 @@ function buildEmailHTML() {
 }
 
 // Pega aquí la URL de tu Web App de Google Apps Script tras desplegarlo
-const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwWbINJNoixk5wRAI0jdvrDpJeAiB_JYx2jhJhYy1mz3z5Q1reJHNkZUyiKnzYNLiSl4g/exec';
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbzR26AEWTXp3Z7HlNgBag28IfSsYISpuANskgLWLe71vmbxuExJ70G-NaOuWqH2sxjvRw/exec';
 const LOGO_URL = 'https://drive.google.com/uc?export=view&id=1YHJmWmGjLBfhl36CiVlT2Ius6Xa7qXy3'; // Sustituir por URL pública cuando esté disponible
 
 function collectAllData() {
