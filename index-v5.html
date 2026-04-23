@@ -1208,12 +1208,22 @@ function buildEmailHTML() {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// ⚠️  URL DEL APPS SCRIPT v5 (diferente a la de Ibone en v4)
-// Reemplaza esta línea con la URL del nuevo Apps Script que despliegues
-// siguiendo las instrucciones en apps-script-v5.gs
+// CONFIGURACIÓN DE BACKEND v6
+//
+// SUPABASE: validación de tokens y actualización de estado de inscritos
+//   (consulta directa desde el navegador con publishable key).
+// APPS SCRIPT v6: solo escritura en Sheet de Resultados + envío del email.
+//
+// La publishable key es segura para usarse desde el navegador porque las
+// RPC de Supabase tienen SECURITY DEFINER y solo exponen lo necesario.
 // ═══════════════════════════════════════════════════════════════════
-const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwcPbeW4F-sApA3OkesfynrPSzb0aabcNQ8jZRz7loeIwTszGSNSw7L17oAC9UM3Nxj/exec';
-const LOGO_URL = 'https://drive.google.com/uc?export=view&id=1YHJmWmGjLBfhl36CiVlT2Ius6Xa7qXy3'; // Sustituir por URL pública cuando esté disponible
+
+const SUPABASE_URL = 'https://juigiagcnxiajsbyuysi.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_xnCr0s6W5vDwYcS9Y_U3lw_Cwl23suv';
+
+const SHEETS_URL = 'REEMPLAZAR_CON_URL_APPS_SCRIPT_V6';
+
+const LOGO_URL = 'https://drive.google.com/uc?export=view&id=1YHJmWmGjLBfhl36CiVlT2Ius6Xa7qXy3';
 
 function collectAllData() {
   const data = {
@@ -1296,10 +1306,11 @@ async function submitForm() {
   // Construir output antes de enviar (necesita los datos en DOM)
   buildOutput();
 
-  // Enviar a Google Sheets (sin bloquear la UI si falla)
-  if (SHEETS_URL && SHEETS_URL !== 'TU_URL_AQUI') {
+  const payload = collectAllData();
+
+  // 1. Enviar a Google Sheets vía Apps Script (sin bloquear la UI si falla)
+  if (SHEETS_URL && !SHEETS_URL.startsWith('REEMPLAZAR')) {
     try {
-      const payload = collectAllData();
       await fetch(SHEETS_URL, {
         method: 'POST',
         mode: 'no-cors',
@@ -1308,6 +1319,27 @@ async function submitForm() {
       });
     } catch (e) {
       console.warn('No se pudo enviar a Google Sheets:', e);
+    }
+  }
+
+  // 2. Marcar token como usado + actualizar estado en Supabase
+  if (ID_CEO) {
+    try {
+      await fetch(`${SUPABASE_URL}/rest/v1/rpc/rpc_completar_diagnostico`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_KEY,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          p_id_ceo: ID_CEO,
+          p_intangible_prioritario: payload.intangible_prioritario || null,
+          p_perfil_bloqueo: payload.perfil_bloqueo || null
+        })
+      });
+    } catch (e) {
+      console.warn('No se pudo actualizar Supabase:', e);
     }
   }
 
@@ -1413,28 +1445,36 @@ buildScaleQ22();
 initCounter('q23','cc-q23',300);
 initCounter('q41','cc-q41',200);
 
-// ══════════════ CONTROL DE ACCESO POR ID ══════════════
+// ══════════════ CONTROL DE ACCESO POR TOKEN (vía Supabase RPC) ══════════════
 async function validarAcceso() {
   const params = new URLSearchParams(window.location.search);
-  const idRaw = params.get('id');
-  const id = idRaw ? idRaw.trim().toUpperCase() : '';
+  // Compatibilidad: aceptamos ?t=TOKEN (preferido) o ?id=TOKEN (alias)
+  const tokenRaw = params.get('t') || params.get('id');
+  const token = tokenRaw ? tokenRaw.trim() : '';
 
-  // Sin ID en la URL: acceso restringido
-  if (!id) {
+  // Sin token en la URL: acceso restringido
+  if (!token) {
     mostrarAccesoDenegado('missing');
     return;
   }
 
   try {
-    const url = `${SHEETS_URL}?accion=validarID&id_ceo=${encodeURIComponent(id)}`;
-    const response = await fetch(url, { method: 'GET' });
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/rpc_validar_token`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ p_token: token })
+    });
     if (!response.ok) throw new Error('HTTP ' + response.status);
     const data = await response.json();
 
     if (data && data.valid === true) {
-      ID_CEO = id;
+      ID_CEO = data.id_ceo || '';
       ID_NOMBRE = data.nombre || null;
-      // Prellenar nombre si lo traemos del Sheet
+      // Prellenar campos de identificación con los datos del CEO en Supabase
       if (data.nombre) {
         const n = document.getElementById('id-nombre');
         if (n && !n.value) n.value = data.nombre;
@@ -1457,7 +1497,7 @@ async function validarAcceso() {
       mostrarAccesoDenegado(reason);
     }
   } catch (err) {
-    console.error('Error validando ID:', err);
+    console.error('Error validando token:', err);
     mostrarAccesoDenegado('error');
   }
 }
@@ -1474,9 +1514,9 @@ function mostrarAccesoDenegado(reason) {
   const detail = document.getElementById('acceso-denegado-detail');
   const messages = {
     missing: 'Este cuestionario requiere un enlace personal de acceso. Revisa el correo de invitación al Programa M&I AVANZA y utiliza el enlace completo que te hemos enviado.',
-    invalid: 'El identificador del enlace no es válido. Asegúrate de haber copiado el enlace completo del correo de invitación.',
-    used:    'Este identificador ya se ha utilizado anteriormente. Cada CEO participante completa el autodiagnóstico una sola vez. Si necesitas acceder de nuevo, contacta con la coordinación del programa.',
-    revoked: 'Este identificador ha sido revocado. Contacta con la coordinación del programa para obtener asistencia.',
+    invalid: 'El enlace no es válido. Asegúrate de haber copiado el enlace completo del correo de invitación.',
+    used:    'Este enlace ya se ha utilizado anteriormente. Cada CEO participante completa el autodiagnóstico una sola vez. Si necesitas acceder de nuevo, contacta con la coordinación del programa.',
+    revoked: 'Este enlace ha sido revocado. Contacta con la coordinación del programa para obtener asistencia.',
     error:   'No se ha podido validar el acceso en este momento. Comprueba tu conexión a internet e inténtalo de nuevo en unos minutos.'
   };
   detail.textContent = messages[reason] || messages.error;
